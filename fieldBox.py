@@ -19,6 +19,7 @@ class FieldBox(pygame.sprite.Sprite):
 		self.cursory = y
 		self.entry_color = entry_color
 		self.text_color = text_color
+		self.cursor_index = 0
 		if font == None:
 			self.font_ = pygame.font.SysFont(sysfont, 20)
 		else:
@@ -41,10 +42,16 @@ class FieldBox(pygame.sprite.Sprite):
 		x_ = x_ * 12
 		if self.cursorx + x_ < self.x:
 			self.cursorx = self.x
-		elif self.cursorx + x_ > self.x + (self.max_chars+1)*12:
-			self.cursorx = self.x + (self.max_chars+1)*12
+			self.cursor_index = 0
+		elif self.cursorx + x_ > self.x + (len(self.text_in))*12:
+			self.cursorx = self.x + (len(self.text_in))*12
+			self.cursor_index = len(self.text_in)
+		elif self.cursorx + x_ > self.x + (self.max_chars)*12:
+			self.cursorx = self.x + (self.max_chars)*12
+			self.cursor_index = self.max_chars
 		else:
 			self.cursorx += x_
+			self.cursor_index += (x_//12)
 
 	def get_cursorx(self):
 		return self.cursorx 
@@ -62,10 +69,16 @@ class FieldBox(pygame.sprite.Sprite):
 		if len(text) <= self.max_chars:
 			self.text_in = text
 			self.cursorx = self.x + 12*len(text)
+			self.cursor_index = len(text)
+
+	def remove_behind_cursor(self):
+		if self.cursor_index > 0:
+			self.text_in = self.text_in[:self.cursor_index-1] + self.text_in[self.cursor_index:]
+			self.cursorx -= 12
+			self.cursor_index -= 1
 
 	def get_text(self):
-		if self.active == True:
-			return self.text_in
+		return self.text_in
 
 	def append_char(self, c):
 		if len(self.text_in + c) <= self.max_chars:
@@ -77,8 +90,15 @@ class FieldBox(pygame.sprite.Sprite):
 			self.text_in += w
 			self.move_cursorx(len(w))
 
+	def append_at_cursor(self, w):
+		if len(self.text_in[:self.cursor_index] + w + self.text_in[self.cursor_index:]) <= self.max_chars:
+			self.text_in = self.text_in[:self.cursor_index] + w + self.text_in[self.cursor_index:]
+			self.move_cursorx(len(w))
+
 	def get_max_chars(self):
 		return self.max_chars
+
+# --Field Box Demo --
 
 box = FieldBox(100, 100, entry_color=(255,255,255), text_color=(255,255,255))
 
@@ -98,13 +118,17 @@ while True:
 					box.set_inactive()
 		elif event.type == pygame.KEYDOWN:
 			if event.key == pygame.K_BACKSPACE:
-				if len(box.get_text()) > 0 and box.get_state() == True:
-					box.set_text(box.get_text()[:-1])
+				if box.get_state() == True:
+					box.remove_behind_cursor()
 			elif event.key == pygame.K_RETURN:
 					box.get_text()
+			elif event.key == pygame.K_LEFT:
+					box.move_cursorx(-1)
+			elif event.key == pygame.K_RIGHT:
+					box.move_cursorx(1)
 			elif event.unicode:
-				if len(box.get_text()) < box.get_max_chars() and box.get_state() == True:
-					box.append_char(event.unicode)
+				if box.get_state() == True:
+					box.append_at_cursor(event.unicode)
 
 	pygame.display.update()
 	clock.tick(15)
