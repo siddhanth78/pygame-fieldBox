@@ -20,23 +20,34 @@ class FieldBox(pygame.sprite.Sprite):
 		self.entry_color = entry_color
 		self.text_color = text_color
 		self.cursor_index = 0
+		self.hide = False
 		if font == None:
 			self.font_ = pygame.font.SysFont(sysfont, 20)
 		else:
 			self.font_ = pygame.font.Font(font, 20)
 
 	def render(self):
-		if self.active == True:
-			pygame.draw.rect(screen, self.entry_color, self.rect, 3, 3)
-			pygame.draw.line(screen, self.text_color, (self.cursorx, self.cursory), (self.cursorx, self.cursory+20), 3)
-		else:
-			pygame.draw.rect(screen, self.entry_color, self.rect, 1, 3)
+		if self.hide == False:
+			if self.active == True:
+				pygame.draw.rect(screen, self.entry_color, self.rect, 3, 3)
+				pygame.draw.line(screen, self.text_color, (self.cursorx, self.cursory), (self.cursorx, self.cursory+20), 3)
+			else:
+				pygame.draw.rect(screen, self.entry_color, self.rect, 1, 3)
 		
-		txt_surf = self.font_.render(self.text_in, True, self.text_color)
-		screen.blit(txt_surf, (self.x, self.y))
+			txt_surf = self.font_.render(self.text_in, True, self.text_color)
+			screen.blit(txt_surf, (self.x, self.y))
 
 	def set_active(self):
 		self.active = True
+
+	def show_box(self):
+		self.hide = False
+
+	def hide_box(self):
+		self.hide = True
+
+	def is_hidden(self):
+		return self.hide
 
 	def move_cursorx(self, x_):
 		x_ = x_ * 12
@@ -111,24 +122,27 @@ while True:
 			pygame.quit()
 			sys.exit(0)
 		elif event.type == pygame.MOUSEBUTTONDOWN:
-			if event.button == 1:
-				if box.get_rect().collidepoint(event.pos) and box.get_state() == False:
-					box.set_active()
-				else:
-					box.set_inactive()
+			if box.is_hidden() == False:
+				if event.button == 1:
+					if box.get_rect().collidepoint(event.pos) and box.get_state() == False:
+						box.set_active()
+					else:
+						box.set_inactive()
 		elif event.type == pygame.KEYDOWN:
-			if event.key == pygame.K_BACKSPACE:
-				if box.get_state() == True:
-					box.remove_behind_cursor()
-			elif event.key == pygame.K_RETURN:
+			if box.is_hidden() == False:
+				if event.key == pygame.K_BACKSPACE:
+					if box.get_state() == True:
+						box.remove_behind_cursor()
+				elif event.key == pygame.K_RETURN:
 					box.get_text()
-			elif event.key == pygame.K_LEFT:
+					box.hide_box()
+				elif event.key == pygame.K_LEFT:
 					box.move_cursorx(-1)
-			elif event.key == pygame.K_RIGHT:
+				elif event.key == pygame.K_RIGHT:
 					box.move_cursorx(1)
-			elif event.unicode:
-				if box.get_state() == True:
-					box.append_at_cursor(event.unicode)
+				elif event.unicode:
+					if box.get_state() == True:
+						box.append_at_cursor(event.unicode)
 
 	pygame.display.update()
 	clock.tick(15)
