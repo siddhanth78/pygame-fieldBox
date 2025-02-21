@@ -70,7 +70,7 @@ class FieldBox(pygame.sprite.Sprite):
 	def set_inactive(self):
 		self.active = False
 
-	def get_state(self):
+	def is_active(self):
 		return self.active
 
 	def get_rect(self):
@@ -124,24 +124,25 @@ while True:
 		elif event.type == pygame.MOUSEBUTTONDOWN:
 			if box.is_hidden() == False:
 				if event.button == 1:
-					if box.get_rect().collidepoint(event.pos) and box.get_state() == False:
+					if box.get_rect().collidepoint(event.pos) and box.is_active() == False:
 						box.set_active()
 					else:
 						box.set_inactive()
 		elif event.type == pygame.KEYDOWN:
 			if box.is_hidden() == False:
 				if event.key == pygame.K_BACKSPACE:
-					if box.get_state() == True:
+					if box.is_active() == True:
 						box.remove_behind_cursor()
 				elif event.key == pygame.K_RETURN:
-					box.get_text()
-					box.hide_box()
+					if box.is_active() == True:
+						box.get_text()
+						box.hide_box()
 				elif event.key == pygame.K_LEFT:
 					box.move_cursorx(-1)
 				elif event.key == pygame.K_RIGHT:
 					box.move_cursorx(1)
 				elif event.unicode:
-					if box.get_state() == True:
+					if box.is_active() == True:
 						box.append_at_cursor(event.unicode)
 
 	pygame.display.update()
